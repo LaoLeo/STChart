@@ -2,8 +2,10 @@
   "name": "scenario-tree-chart",
   "version": "1.0.0",
   "description": "剧情树图表，描述交互式剧情的所有走向分支情况",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
+    "dev": "rollup -c -w",
+    "build": "rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -11,6 +13,18 @@
     "tree",
     "chart"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:LaoLeo/STChart.git"
+  },
   "author": "AlexL",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "rollup": "^2.2.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-uglify": "^6.0.4"
+  },
+  "dependencies": {
+    "echarts": "^4.7.0"
+  }
 }
