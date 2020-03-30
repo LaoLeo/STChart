@@ -35675,10 +35675,21 @@
         1: '开始',
         2: '剧情',
         3: '结局',
-        // 4: '开始', // 就是这么奇葩。。。 (废弃))
-        // 5: '预告' 
     };
 
+    /*
+            id: dialog.dialogId,
+            description: dialog.description,
+            name: dialog.name,
+            chapter: dialog.chapter,
+            index: treeNode ? treeNode.index : dialog.dialogId,
+            deepLevel: treeNode ? treeNode.deepLevel : 0, // 在composeProcessDialogs中会用到
+            position: posMap[dialog.dialogId],
+            isChapFirstNode,
+            nodeType: NODE_TYPE_TEXT[dialog.type],
+            type: dialog.type,
+            children: []
+    */
 
     function filterDialogsByChapter(chapter = 1) {
         const dialogs = processDialogs.filter(
@@ -35690,11 +35701,9 @@
             processDialogs
         );
 
-        let dialogTreeDatas = genDialogTree(processDialogs);
         let f_data = formatData(
             chapter,
             [...dialogs, ...dialogsInNextChap],
-            dialogTreeDatas,
             processDialogs
         );
 
@@ -35706,12 +35715,11 @@
     }
 
 
-    function formatData(chapter, dioDatas, dialogTreeDatas, processDialogs) {
+    function formatData(chapter, dioDatas, processDialogs) {
         // 格式化 后台传入的数据
 
         let links = [];
         let nodes = [];
-
 
         // 如果没有内容，初始化数据
         if (dioDatas.length === 0) {
@@ -35722,13 +35730,11 @@
 
         let posMap = genDialogPosition(chapter, dioDatas, processDialogs);
 
+        let dialogTreeDatas = genDialogTree(processDialogs);
+
         dioDatas.forEach((value) => {
             // 格式化树
-            // 先格式化连线，有连线的节点才推入
-            // 只推入关键属性，展示属性在工具 vue中设定
-
-
-            if (value.analyses) {
+            if (value.children) {
                 let temp = _genLinks(value, dioDatas);
                 links = [...links, ...temp];
             }
@@ -35748,49 +35754,21 @@
     function _genLinks(value, dioDatas) {
         let links = [];
 
-        value.analyses.forEach((analyse) => {
+        value.children.forEach((nextDialogId) => {
+            // 检验完整
+            let check = -1;
+            check = dioDatas.findIndex(function (item) {
+                return item.dialogId == nextDialogId;
+            });
 
-            if (analyse.propsAnalyses) {
-
-                analyse.propsAnalyses.forEach((link, index) => {
-
-                    // 检验完整
-                    let check = -1;
-                    check = dioDatas.findIndex(function (item) {
-                        return item.dialogId == link.nextDialogId;
-                    });
-
-                    if (check >= 0) {
-
-                        // 选项->下一节点
-                        links.push({
-                            'id': value.dialogId + '-' + link.nextDialogId,
-                            'name': analyse.keywords,
-                            'source': value.dialogId,
-                            'target': link.nextDialogId
-                        });
-                    }
+            if (check >= 0) {
+                // 选项->下一节点
+                links.push({
+                    id: value.dialogId + '-' + nextDialogId,
+                    name: "name:" + value.dialogId + '-' + nextDialogId,
+                    source: value.dialogId,
+                    target: nextDialogId
                 });
-
-            } else if (analyse.nextDialogId) {
-                // 兼容无道具
-
-                // 检验完整
-                let check = -1;
-                check = dioDatas.findIndex(function (item) {
-                    return item.dialogId == analyse.nextDialogId;
-                });
-
-                if (check >= 0) {
-
-                    // 选项->下一节点
-                    links.push({
-                        'id': value.dialogId + '-' + analyse.nextDialogId,
-                        'name': analyse.keywords,
-                        'source': value.dialogId,
-                        'target': analyse.nextDialogId
-                    });
-                }
             }
         });
 
@@ -35804,34 +35782,21 @@
         if (treeNode) {
             // 挂上深度deepLevel，在moveDialogs中会作为判断条件
             dialog.deepLevel = treeNode.deepLevel;
-
-            // 章节的第一个节点类型默认为存档类型，且不能修改
             isChapFirstNode = treeNode.parents.some(d => d.chapter !== dialog.chapter);
-            isChapFirstNode && (dialog.record = 1);
         }
 
         let node = {
             id: dialog.dialogId,
-            corpusIds: dialog.corpusIds,
             description: dialog.description,
             name: dialog.name,
             chapter: dialog.chapter,
-            selectedRole: dialog.roleId,
-            errorCorpusIds: (dialog.rePromptCorpusId && dialog.rePromptCorpusId > 0) ? [dialog.rePromptCorpusId] : (dialog.errorCorpusIds ? dialog.errorCorpusIds : []),
-            robotAutoSelectCorpusId: (dialog.robotAutoSelectCorpusId && dialog.robotAutoSelectCorpusId > 0) ? [dialog.robotAutoSelectCorpusId] : [],
-            autoSelectCorpusId: (dialog.autoSelectCorpusId && dialog.autoSelectCorpusId > 0) ? [dialog.autoSelectCorpusId] : [],
-            winner: dialog.winner || [],
-            canedit: true,
             index: treeNode ? treeNode.index : dialog.dialogId,
-            points: treeNode ? treeNode.parents.length : 0,
             deepLevel: treeNode ? treeNode.deepLevel : 0, // 在composeProcessDialogs中会用到
             position: posMap[dialog.dialogId],
-            canSave: !!dialog.record,
-            saveDataSet: dialog.saveDataSet || 0, // 数据存档标记
             isChapFirstNode,
             nodeType: NODE_TYPE_TEXT[dialog.type],
             type: dialog.type,
-            display: dialog.display,
+            children: dialog.children
         };
 
         return node;
@@ -35846,41 +35811,23 @@
 
             dioDatas = [{
                 dialogId: `d_${startId}`,
-                robotAutoSelectCorpusId: [],
-                autoSelectCorpusId: [],
                 description: '这是一个故事的开头，播完会进入第一个剧情',
                 name: '开头',
                 type: 1,
+                nodeType: NODE_TYPE_TEXT[1],
                 chapter: 1,
-                record: 0,
-                points: 0,
                 deepLevel: 0,
-                analyses: [{
-                    keywords: ['*'],
-                    propsAnalyses: [{
-
-                        nextDialogId: `d_${nextId}`,
-                        hasProps: 1,
-                        propsId: null,
-                        gainPropsId: null,
-                    }]
-                }]
+                children: [`d_${nextId}`]
             },
             {
                 dialogId: `d_${nextId}`,
-                type: 2,
-                chapter: 1,
-                robotAutoSelectCorpusId: [],
-                autoSelectCorpusId: [],
                 description: '这是故事的第一个剧情，完成后用户可以开始进行选择。这也是一个存档点，用户再次进入游戏时会跳过开头从这里开始',
                 name: '1-1:剧情',
-                record: 1,
-                // nodeType: '剧情',
-                points: 1,
-                deepLevel: 1,
-                analyses: []
-            }
-            ];
+                type: 2,
+                nodeType: NODE_TYPE_TEXT[2],
+                chapter: 1,
+                deepLevel: 1
+            }];
         }
 
         return dioDatas;
@@ -35918,12 +35865,9 @@
     // 问题: 章节第一个节点成环会出问题，找不出第一个节点
     function _findRoots$1(dioDatas) {
         let nextIds = [];
-        dioDatas.filter(d => !!(d.analyses))
+        dioDatas.filter(d => !!d.children)
             .forEach(d => {
-                let ids = d.analyses.filter(a => !!a.propsAnalyses).map(a => a.propsAnalyses.map(p => p.nextDialogId));
-                let nextDialogIds = [];
-                ids.forEach(item => (nextDialogIds = [...nextDialogIds, ...item]));
-                nextIds = [...nextDialogIds, ...nextIds];
+                nextIds = [...nextIds, ...d.children];
             });
 
         return dioDatas.filter(d => !nextIds.includes(d.dialogId));
@@ -36041,26 +35985,16 @@
     }
 
     function genRandomId() {
-        let timestamp = String(Date.now());
-        let offset = Math.floor(Math.random() * (timestamp.length - 3));
-        let id = timestamp.slice(offset, offset + 3);
+        let randomStr = Math.random().toString(36);
+        let offset = Math.floor(Math.random() * (randomStr.length - 3));
+        let id = randomStr.slice(offset, offset + 3);
 
         return id;
     }
 
     // 获取剧情点的下一级子节点的id
     function getNextDialogIds(dialog) {
-        let nextIds = [];
-        if (dialog.analyses) {
-            dialog.analyses.forEach(item => {
-                if (item.propsAnalyses) {
-                    let nIds = item.propsAnalyses.map(p => p.nextDialogId);
-                    nextIds = [...nextIds, ...nIds];
-                }
-            });
-        }
-
-        return nextIds.filter(id => (id !== '' && id !== '-1'));
+        return (dialog.children || []).filter(id => (id !== '' && id !== '-1'));
 
     }
 
@@ -36081,8 +36015,7 @@
                     // left: 'right'
                 },
                 xAxis: {
-                    id: 0,
-                    type: 'category',
+                    type: 'value',
                     show: true,
                     min: 'dataMin',
                     max: 'dataMax',
@@ -36092,8 +36025,7 @@
                     position: "bottom"
                 },
                 yAxis: {
-                    id: 0,
-                    type: 'category',
+                    type: 'value',
                     show: true,
                     min: 'dataMin',
                     max: 'dataMax',
@@ -36348,62 +36280,6 @@
                     graphSeries.data.length - 1
                 ].dataSet.position;
 
-            // graphSeries.data.sort(function (a, b) {
-            //     if (a.dataSet.position != b.dataSet.position) {
-            //         return a.dataSet.position - b.dataSet.position;
-            //     } else if (a.dataSet.position == b.dataSet.position) {
-            //         // 第一步：如果相同，按照 后续链接长度排序
-            //         // 第二步：排序是围绕中心点，所以需要判断y值
-
-            //         let nodesCount_a = 0;
-            //         let nodesCount_b = 0;
-            //         // let parentNodeY_a = 0;
-            //         // let parentNodeY_b = 0;
-            //         let parentSelectY_a = 0;
-            //         let parentSelectY_b = 0;
-
-            //         graphSeries.data.forEach((item) => {
-            //             // 剧情点
-            //             if (
-            //                 item.dataSet.index.length > a.dataSet.index.length &&
-            //                 item.dataSet.index.indexOf(a.dataSet.index) >= 0
-            //             ) {
-            //                 nodesCount_a++;
-            //             }
-            //             if (
-            //                 item.dataSet.index.length > b.dataSet.index.length &&
-            //                 item.dataSet.index.indexOf(b.dataSet.index) >= 0
-            //             ) {
-            //                 nodesCount_b++;
-            //             }
-            //             if (item.dataSet.pointTo == a.dataSet.id) {
-            //                 parentSelectY_a = item.y;
-            //             }
-
-            //             if (item.dataSet.pointTo == b.dataSet.id) {
-            //                 parentSelectY_b = item.y;
-            //             }
-            //         });
-
-            //         // 剧情
-            //         if (parentSelectY_a * parentSelectY_b < 0) {
-            //             return parentSelectY_b - parentSelectY_a;
-            //         } else if (
-            //             parentSelectY_a * parentSelectY_b > 0 &&
-            //             parentSelectY_a < 0
-            //         ) {
-            //             return nodesCount_b - nodesCount_a;
-            //         } else if (
-            //             parentSelectY_a * parentSelectY_b > 0 &&
-            //             parentSelectY_a > 0
-            //         ) {
-            //             return nodesCount_a - nodesCount_b;
-            //         } else {
-            //             return parentSelectY_a - parentSelectY_b;
-            //         }
-            //     }
-            // });
-
             this._repositionNodes();
 
             this._showTree('rezoom');
@@ -36506,14 +36382,7 @@
 
             this.chart.on('click', function (params) {
                 alert("click");
-                // const index = params.dataIndex;
-                // const node = this._defaultOpt.series[0].data[index];
-                // if (node.isOfNextChap) return;
-
-                // const dataSet = node.dataSet;
-                // this.copyEditor = dataSet;
-
-                // this.$emit('changeEditor', dataSet);
+                console.warn(params);
             });
 
             // this.chart.on('mouseout', function (params) {
@@ -36612,7 +36481,7 @@
                 //     type: '上线',
                 //     id: data.id
                 // });
-            } else if (data.nodeType == '剧情' && data.canSave == 0) {
+            } else if (data.nodeType == '剧情') {
                 nodeData.symbol = this.treeConfig.guts['guts'].nonSave.symbol;
                 nodeData.symbolSize = this.treeConfig.guts['guts'].nonSave.symbolSize;
                 nodeData.itemStyle.normal.color = this.treeConfig.guts[
@@ -36636,20 +36505,21 @@
                 ].borderSize;
 
                 // nodeData.attributes.modularity_class = '结局';
-            } else if (data.nodeType == '剧情' && data.canSave == 1) {
-                nodeData.symbol = this.treeConfig.guts['guts'].needSave.symbol;
-                nodeData.symbolSize = this.treeConfig.guts['guts'].needSave.symbolSize;
-                nodeData.itemStyle.normal.color = this.treeConfig.guts[
-                    'guts'
-                ].needSave.bgColor;
-                nodeData.itemStyle.normal.borderColor = this.treeConfig.guts[
-                    'guts'
-                ].needSave.borderColor;
-                nodeData.itemStyle.normal.borderSize = this.treeConfig.guts[
-                    'guts'
-                ].borderSize;
-                // nodeData.attributes.modularity_class = '剧情:存档';
-            }
+            } 
+            // else if (data.nodeType == '剧情' && data.canSave == 1) {
+            //     nodeData.symbol = this.treeConfig.guts['guts'].needSave.symbol;
+            //     nodeData.symbolSize = this.treeConfig.guts['guts'].needSave.symbolSize;
+            //     nodeData.itemStyle.normal.color = this.treeConfig.guts[
+            //         'guts'
+            //     ].needSave.bgColor;
+            //     nodeData.itemStyle.normal.borderColor = this.treeConfig.guts[
+            //         'guts'
+            //     ].needSave.borderColor;
+            //     nodeData.itemStyle.normal.borderSize = this.treeConfig.guts[
+            //         'guts'
+            //     ].borderSize;
+            //     // nodeData.attributes.modularity_class = '剧情:存档';
+            // }
 
             return nodeData;
         }

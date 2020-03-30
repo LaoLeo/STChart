@@ -19,8 +19,7 @@ export default class STChart {
                 // left: 'right'
             },
             xAxis: {
-                id: 0,
-                type: 'category',
+                type: 'value',
                 show: true,
                 min: 'dataMin',
                 max: 'dataMax',
@@ -30,8 +29,7 @@ export default class STChart {
                 position: "bottom"
             },
             yAxis: {
-                id: 0,
-                type: 'category',
+                type: 'value',
                 show: true,
                 min: 'dataMin',
                 max: 'dataMax',
@@ -286,62 +284,6 @@ export default class STChart {
                 graphSeries.data.length - 1
             ].dataSet.position;
 
-        // graphSeries.data.sort(function (a, b) {
-        //     if (a.dataSet.position != b.dataSet.position) {
-        //         return a.dataSet.position - b.dataSet.position;
-        //     } else if (a.dataSet.position == b.dataSet.position) {
-        //         // 第一步：如果相同，按照 后续链接长度排序
-        //         // 第二步：排序是围绕中心点，所以需要判断y值
-
-        //         let nodesCount_a = 0;
-        //         let nodesCount_b = 0;
-        //         // let parentNodeY_a = 0;
-        //         // let parentNodeY_b = 0;
-        //         let parentSelectY_a = 0;
-        //         let parentSelectY_b = 0;
-
-        //         graphSeries.data.forEach((item) => {
-        //             // 剧情点
-        //             if (
-        //                 item.dataSet.index.length > a.dataSet.index.length &&
-        //                 item.dataSet.index.indexOf(a.dataSet.index) >= 0
-        //             ) {
-        //                 nodesCount_a++;
-        //             }
-        //             if (
-        //                 item.dataSet.index.length > b.dataSet.index.length &&
-        //                 item.dataSet.index.indexOf(b.dataSet.index) >= 0
-        //             ) {
-        //                 nodesCount_b++;
-        //             }
-        //             if (item.dataSet.pointTo == a.dataSet.id) {
-        //                 parentSelectY_a = item.y;
-        //             }
-
-        //             if (item.dataSet.pointTo == b.dataSet.id) {
-        //                 parentSelectY_b = item.y;
-        //             }
-        //         });
-
-        //         // 剧情
-        //         if (parentSelectY_a * parentSelectY_b < 0) {
-        //             return parentSelectY_b - parentSelectY_a;
-        //         } else if (
-        //             parentSelectY_a * parentSelectY_b > 0 &&
-        //             parentSelectY_a < 0
-        //         ) {
-        //             return nodesCount_b - nodesCount_a;
-        //         } else if (
-        //             parentSelectY_a * parentSelectY_b > 0 &&
-        //             parentSelectY_a > 0
-        //         ) {
-        //             return nodesCount_a - nodesCount_b;
-        //         } else {
-        //             return parentSelectY_a - parentSelectY_b;
-        //         }
-        //     }
-        // });
-
         this._repositionNodes();
 
         this._showTree('rezoom');
@@ -444,14 +386,7 @@ export default class STChart {
 
         this.chart.on('click', function (params) {
             alert("click")
-            // const index = params.dataIndex;
-            // const node = this._defaultOpt.series[0].data[index];
-            // if (node.isOfNextChap) return;
-
-            // const dataSet = node.dataSet;
-            // this.copyEditor = dataSet;
-
-            // this.$emit('changeEditor', dataSet);
+            console.warn(params)
         });
 
         // this.chart.on('mouseout', function (params) {
@@ -550,7 +485,7 @@ export default class STChart {
             //     type: '上线',
             //     id: data.id
             // });
-        } else if (data.nodeType == '剧情' && data.canSave == 0) {
+        } else if (data.nodeType == '剧情') {
             nodeData.symbol = this.treeConfig.guts['guts'].nonSave.symbol;
             nodeData.symbolSize = this.treeConfig.guts['guts'].nonSave.symbolSize;
             nodeData.itemStyle.normal.color = this.treeConfig.guts[
@@ -574,20 +509,21 @@ export default class STChart {
             ].borderSize;
 
             // nodeData.attributes.modularity_class = '结局';
-        } else if (data.nodeType == '剧情' && data.canSave == 1) {
-            nodeData.symbol = this.treeConfig.guts['guts'].needSave.symbol;
-            nodeData.symbolSize = this.treeConfig.guts['guts'].needSave.symbolSize;
-            nodeData.itemStyle.normal.color = this.treeConfig.guts[
-                'guts'
-            ].needSave.bgColor;
-            nodeData.itemStyle.normal.borderColor = this.treeConfig.guts[
-                'guts'
-            ].needSave.borderColor;
-            nodeData.itemStyle.normal.borderSize = this.treeConfig.guts[
-                'guts'
-            ].borderSize;
-            // nodeData.attributes.modularity_class = '剧情:存档';
-        }
+        } 
+        // else if (data.nodeType == '剧情' && data.canSave == 1) {
+        //     nodeData.symbol = this.treeConfig.guts['guts'].needSave.symbol;
+        //     nodeData.symbolSize = this.treeConfig.guts['guts'].needSave.symbolSize;
+        //     nodeData.itemStyle.normal.color = this.treeConfig.guts[
+        //         'guts'
+        //     ].needSave.bgColor;
+        //     nodeData.itemStyle.normal.borderColor = this.treeConfig.guts[
+        //         'guts'
+        //     ].needSave.borderColor;
+        //     nodeData.itemStyle.normal.borderSize = this.treeConfig.guts[
+        //         'guts'
+        //     ].borderSize;
+        //     // nodeData.attributes.modularity_class = '剧情:存档';
+        // }
 
         return nodeData;
     }
