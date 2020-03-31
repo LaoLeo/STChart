@@ -1,4 +1,51 @@
-const processDialogs = []
+const processDialogs = [
+    {
+        dialogId: "1",
+        description: "这是一个喜剧，请不要备好零食，因为你会笑喷",
+        name: "开头",
+        chapter: 1,
+        type: 1,
+        children: ["2", "3"]
+    },
+    {
+        dialogId: "2",
+        description: "xxxxx",
+        name: "剧情1",
+        chapter: 1,
+        type: 2,
+        children: ["5"]
+    },
+    {
+        dialogId: "3",
+        description: "YYYYY",
+        name: "剧情2",
+        chapter: 1,
+        type: 2,
+        children: ["4"]
+    },
+    {
+        dialogId: "4",
+        description: "AAAAAAAAAYYY",
+        name: "剧情3",
+        chapter: 1,
+        type: 3
+    },
+    {
+        dialogId: "5",
+        description: "CCCCCCCCCCC",
+        name: "剧情4",
+        chapter: 2,
+        type: 2,
+        children: ["6"]
+    },
+    {
+        dialogId: "6",
+        description: "IIIIIIIIIII",
+        name: "剧情4",
+        chapter: 2,
+        type: 3
+    },
+]
 const NODE_TYPE_TEXT = {
     1: '开始',
     2: '剧情',
@@ -93,16 +140,16 @@ function _genLinks(value, dioDatas) {
 
     value.children.forEach((nextDialogId) => {
         // 检验完整
-        let check = -1;
-        check = dioDatas.findIndex(function (item) {
+        let index = -1;
+        index = dioDatas.findIndex(function (item) {
             return item.dialogId == nextDialogId;
         });
 
-        if (check >= 0) {
+        if (index >= 0) {
             // 选项->下一节点
             links.push({
                 id: value.dialogId + '-' + nextDialogId,
-                name: "name:" + value.dialogId + '-' + nextDialogId,
+                name: `${value.name} -> ${dioDatas[index].name}`,
                 source: value.dialogId,
                 target: nextDialogId
             });

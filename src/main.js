@@ -4,6 +4,10 @@
 
 import * as echarts from "echarts/src/echarts"
 import "echarts/src/chart/graph"
+// 引入提示框组件、标题组件、工具箱组件。
+import 'echarts/src/component/tooltip';
+// import 'echarts/src/component/title';
+// import 'echarts/src/component/toolbox';
 import { filterDialogsByChapter } from "./util"
 
 export default class STChart {
@@ -12,31 +16,33 @@ export default class STChart {
         this.chart = null
         this.currChapter = 1
         this._defaultOpt = {
-            title: {
-                text: '',
-                // subtext: '',
-                // top: 'bottom',
-                // left: 'right'
-            },
+            // title: {
+            //     text: '',
+            //     subtext: '',
+            //     top: 'bottom',
+            //     left: 'right'
+            // },
             xAxis: {
                 type: 'value',
                 show: true,
-                min: 'dataMin',
+                min: 0,
                 max: 'dataMax',
                 splitLine: {
                     show: true
                 },
-                position: "bottom"
+                value: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+                // position: "bottom"
             },
             yAxis: {
                 type: 'value',
                 show: true,
-                min: 'dataMin',
+                min: 0,
                 max: 'dataMax',
                 splitLine: {
                     show: true
                 },
-                position: "left"
+                position: "left",
+                value: [-50, -40, -30, -20, -10, 0, 10, 20, 30, 40]
             },
             backgroundColor: 'rgba(210, 236, 252, 0.2)',
             tooltip: {
@@ -49,25 +55,26 @@ export default class STChart {
                     return obj;
                 },
                 formatter: function (data) {
-                    if (data.data.dataSet && data.data.dataSet.canedit) {
+                    if (data.dataType == "node") {
+                        let sourceData = data.data.dataSet;
                         let str = '';
-                        str = str + '【名称】' + data.data.dataSet.name + '<br />';
-                        str = str + `【章节】第${data.data.dataSet.chapter}章<br />`;
-                        if (data.data.dataSet.selectors.length > 1) {
-                            str = str + '【选项】' + '<br />';
-                            data.data.dataSet.selectors.forEach((item, index) => {
-                                str =
-                                    str +
-                                    '<span style="margin-left:1rem;color:#eaeaea" >第' +
-                                    (index + 1) +
-                                    '项:' +
-                                    item.keywordsArr.join(',') +
-                                    '</p><br />';
-                            });
-                        }
+                        str = str + '【名称】' + sourceData.name + '<br />';
+                        str = str + `【章节】第${sourceData.chapter}章<br />`;
+                        // if (sourceData.selectors.length > 1) {
+                        //     str = str + '【选项】' + '<br />';
+                        //     sourceData.selectors.forEach((item, index) => {
+                        //         str =
+                        //             str +
+                        //             '<span style="margin-left:1rem;color:#eaeaea" >第' +
+                        //             (index + 1) +
+                        //             '项:' +
+                        //             item.keywordsArr.join(',') +
+                        //             '</p><br />';
+                        //     });
+                        // }
                         return str;
-                    } else if (data.data.name) {
-                        return data.data.name.join(',').replace('*', '[无选项]');
+                    } else if (data.dataType == "edge") {
+                        return data.data.name;
                     }
                 }
             },
@@ -78,7 +85,7 @@ export default class STChart {
                     // coordinateSystem: 'cartesian2d', //采用直角坐标系
                     symbolSize: [40, 15],
                     symbolOffset: [5, 0],
-                    roam: 'move',
+                    roam: true,
                     label: {
                         normal: {
                             color: 'rgba(0, 0, 0, 0.6)',
@@ -89,9 +96,9 @@ export default class STChart {
                     symbol: 'circle',
                     edgeSymbol: ['circle', 'arrow'],
                     edgeSymbolSize: [4, 10],
-                    edgeLabel: {
-                        fontSize: 20
-                    },
+                    // edgeLabel: {
+                    //     fontSize: 20
+                    // },
                     data: [], // 挂载自定数据
                     links: [], // 挂载箭头连线数据
                     lineStyle: {
@@ -105,6 +112,7 @@ export default class STChart {
             ],
         }
         this.treeConfig = {
+            xStartPosition: 10,
             yPositionSize: 3,
             xPositionSize: 5,
             edge: {
@@ -112,18 +120,14 @@ export default class STChart {
                 size: [0, 2]
             },
             line: {
-                normal: {
-                    opacity: 0.9,
-                    width: 2,
-                    curveness: 0
-                }
+                type: "solid",
+                opacity: 0.9,
+                width: 2,
             },
-            lineTransparent: {
-                normal: {
-                    opacity: 0.3,
-                    width: 2,
-                    curveness: 0
-                }
+            lineDashed: {
+                type: "dashed",
+                opacity: 0.2,
+                width: 2,
             },
             guts: {
                 begin: {
@@ -223,10 +227,13 @@ export default class STChart {
     setOption(opt = {}) {
         this._extend(this._defaultOpt, opt)
         this.chart = echarts.init(this.el)
-        // todo 处理箭头数据
+        this.renderStory()
+    }
+
+    renderStory() {
         let graphSeries = this._defaultOpt.series[0]
 
-        let chartData = filterDialogsByChapter()
+        let chartData = filterDialogsByChapter(this.currChapter)
         chartData.datas.forEach(data => {
             let nodeData = {
                 id: data.id,
@@ -254,7 +261,7 @@ export default class STChart {
             let targetNode = graphSeries.data.find(
                 d => d.id === link.target
             );
-            let linkType = targetNode.isOfNextChap ? 'lineTransparent' : 'line';
+            let linkType = targetNode.isOfNextChap ? 'lineDashed' : 'line';
 
             let linkData = {
                 id: link.id,
@@ -270,7 +277,6 @@ export default class STChart {
 
         this.chart.showLoading()
         this._resizeGutNode()
-
     }
 
     _resizeGutNode() {
@@ -337,7 +343,7 @@ export default class STChart {
                 ((positonCount.get(node.dataSet.position) + 1) * dz) / 2 -
                 dz * positonCount_Used.get(node.dataSet.position);
 
-            node.x = node.dataSet.position * this.treeConfig.xPositionSize;
+            node.x = node.dataSet.position * this.treeConfig.xPositionSize + this.treeConfig.xStartPosition;
             node.y = parseInt(node.y);
             node.x = parseInt(node.x);
         });
