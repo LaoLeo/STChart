@@ -1,65 +1,8 @@
-const processDialogs = [
-    {
-        dialogId: "1",
-        description: "这是一个喜剧，请不要备好零食，因为你会笑喷",
-        name: "开头",
-        chapter: 1,
-        type: 1,
-        children: ["2", "3"]
-    },
-    {
-        dialogId: "2",
-        description: "xxxxx",
-        name: "剧情1",
-        chapter: 1,
-        type: 2,
-        children: ["5"]
-    },
-    {
-        dialogId: "3",
-        description: "YYYYY",
-        name: "剧情2",
-        chapter: 1,
-        type: 2,
-        children: ["4"]
-    },
-    {
-        dialogId: "4",
-        description: "AAAAAAAAAYYY",
-        name: "剧情3",
-        chapter: 1,
-        type: 3
-    },
-    {
-        dialogId: "5",
-        description: "CCCCCCCCCCC",
-        name: "剧情4",
-        chapter: 2,
-        type: 2,
-        children: ["6"]
-    },
-    {
-        dialogId: "6",
-        description: "IIIIIIIIIII",
-        name: "剧情4",
-        chapter: 2,
-        type: 3
-    },
-]
 const NODE_TYPE_TEXT = {
     1: '开始',
     2: '剧情',
     3: '结局',
 };
-// const CHAP_STATUS = {
-//     PRE: 1, // 预告
-//     ONLINE: 2 // 上线
-// }
-const DIALOG_NODE_TYPE = {
-    begin: 1,
-    dialog: 2,
-    end: 3
-}
 
 /*
         id: dialog.dialogId,
@@ -75,15 +18,21 @@ const DIALOG_NODE_TYPE = {
         children: []
 */
 
-export function filterDialogsByChapter(chapter = 1) {
-    const dialogs = processDialogs.filter(
-        d => d.chapter === chapter
-    );
-    // 衔接点
-    const dialogsInNextChap = getDialogsOfNextChapter(
-        dialogs,
-        processDialogs
-    );
+export function filterDialogsByChapter(chapter, processDialogs) {
+    let dialogs, dialogsInNextChap;
+    if (chapter) {
+        dialogs = processDialogs.filter(
+            d => d.chapter === chapter
+        );
+        // 衔接点
+        dialogsInNextChap = getDialogsOfNextChapter(
+            dialogs,
+            processDialogs
+        );
+    } else {
+        dialogs = processDialogs
+        dialogsInNextChap = []
+    }
 
     let f_data = formatData(
         chapter,
@@ -281,7 +230,12 @@ function findRoots(currChapNo, processDialogs) {
     }
 
     // 章节内不是子节点的节点为首节点
-    let currChapDialog = processDialogs.filter(d => (d.chapter === currChapNo));
+    let currChapDialog
+    if (currChapNo) {
+        currChapDialog = processDialogs.filter(d => (d.chapter === currChapNo));
+    }  else {
+        currChapDialog = processDialogs
+    }
     let roots$1 = _findRoots$1(currChapDialog);
 
     // 跳章节点为首节点

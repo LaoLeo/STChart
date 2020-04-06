@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +13,90 @@
         }
     </style>
 </head>
+
 <body>
+    <button id="prevBtn">上一章</button>
+    <button id="nextBtn">下一章</button>
+    <button id="showAllBtn">显示全部</button>
     <div id="STChartCon"></div>
     <script src="../dist/index.js"></script>
 
     <script>
-        STChart.init(document.getElementById("STChartCon"))
+        const processDialogs = [
+            {
+                dialogId: "1",
+                description: "这是一个喜剧，请不要备好零食，因为你会笑喷",
+                name: "开头",
+                chapter: 1,
+                type: 1,
+                children: ["2", "3"]
+            },
+            {
+                dialogId: "2",
+                description: "xxxxx",
+                name: "剧情1",
+                chapter: 1,
+                type: 2,
+                children: ["5"]
+            },
+            {
+                dialogId: "3",
+                description: "YYYYY",
+                name: "剧情2",
+                chapter: 1,
+                type: 2,
+                children: ["4"]
+            },
+            {
+                dialogId: "4",
+                description: "AAAAAAAAAYYY",
+                name: "剧情3",
+                chapter: 1,
+                type: 3
+            },
+            {
+                dialogId: "5",
+                description: "CCCCCCCCCCC",
+                name: "剧情4",
+                chapter: 2,
+                type: 2,
+                children: ["6"]
+            },
+            {
+                dialogId: "6",
+                description: "IIIIIIIIIII",
+                name: "剧情5",
+                chapter: 2,
+                type: 3
+            },
+        ]
+        const chart = STChart.init(document.getElementById("STChartCon"))
+        let chapterNo = 1
+        chart.setData(processDialogs)
+        chart.renderStory(1)
 
+        document.getElementById("prevBtn").addEventListener("click", prevChapStroy, false)
+        document.getElementById("nextBtn").addEventListener("click", nextChapStroy, false)
+        document.getElementById("showAllBtn").addEventListener("click", wholeStroy, false)
+        
+        function wholeStroy() {
+            chart.renderStory()
+        }
+        function prevChapStroy() {
+            if (chapterNo <= 1) return alert("已经是最小章节")
+            --chapterNo
+            chart.renderStory(chapterNo)
+        }
+        function nextChapStroy() {
+            const max = [...processDialogs].sort(descSortFn)[0].chapter
+            if (chapterNo >= max) return alert("已经是最大章节")
+            chapterNo++
+            chart.renderStory(chapterNo)
+        }
+        function descSortFn(a, b) {
+            return b.chapter - a.chapter
+        }
     </script>
 </body>
+
 </html>

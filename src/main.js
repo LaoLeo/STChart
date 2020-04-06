@@ -14,7 +14,8 @@ export default class STChart {
     constructor(el) {
         this.el = el
         this.chart = null
-        this.currChapter = 1
+        this.currChapter = 0
+        this.processDialogs = null
         this._defaultOpt = {
             // title: {
             //     text: '',
@@ -60,6 +61,7 @@ export default class STChart {
                         let str = '';
                         str = str + '【名称】' + sourceData.name + '<br />';
                         str = str + `【章节】第${sourceData.chapter}章<br />`;
+                        str += `【剧情】 ${sourceData.description}`
                         // if (sourceData.selectors.length > 1) {
                         //     str = str + '【选项】' + '<br />';
                         //     sourceData.selectors.forEach((item, index) => {
@@ -227,13 +229,39 @@ export default class STChart {
     setOption(opt = {}) {
         this._extend(this._defaultOpt, opt)
         this.chart = echarts.init(this.el)
-        this.renderStory()
+        // if (this.processDialogs) this.renderStory()
+        // return this
     }
 
-    renderStory() {
+    setData(dialogs) {
+        if (this._typeof(dialogs) == "Array") {
+            this.processDialogs = dialogs
+            // this.setOption()
+            return this
+        } else {
+            throw new Error("dialos "+dialogs+" is not array!")
+        }
+    }
+
+    prevChap() {
+        if (this.currChapter <= 1)  return
+        this.renderStory(--this.currChapter)
+    }
+
+    nextChap() {
+        this.renderStory(++this.currChapter)
+    }
+    /**
+     * 按章节显示剧情
+     * @param {Number} chapter 
+     */
+    renderStory(chapter) {
+        this.currChapter = chapter || 0
         let graphSeries = this._defaultOpt.series[0]
 
-        let chartData = filterDialogsByChapter(this.currChapter)
+        let chartData = filterDialogsByChapter(this.currChapter, this.processDialogs)
+        graphSeries.data = []
+        graphSeries.links = []
         chartData.datas.forEach(data => {
             let nodeData = {
                 id: data.id,
@@ -244,8 +272,7 @@ export default class STChart {
                     }
                 },
                 chapterNo: data.chapter ? data.chapter : '1',
-                // chapterType: data.dataType ? data.dataType : '剧情',
-                isOfNextChap: this.currChapter !== data.chapter,
+                isOfNextChap: this.currChapter !== 0 && this.currChapter !== data.chapter,
                 symbol: '',
                 symbolSize: [0, 0],
                 x: 0,
@@ -547,6 +574,6 @@ export default class STChart {
     }
 
     _typeof(o) {
-        return Object.prototype.toString.call(o).substr(8, -1)
+        return Object.prototype.toString.call(o).slice(8, -1)
     }
 }
