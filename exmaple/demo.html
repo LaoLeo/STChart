@@ -6,8 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>剧情树组件demo</title>
     <style>
+        body {
+            margin: 20px 0;
+        }
         #STChartCon {
-            margin: 0 auto;
+            margin: 20px auto;
             width: 80%;
             height: 400px;
         }
@@ -15,9 +18,12 @@
 </head>
 
 <body>
-    <button id="prevBtn">上一章</button>
-    <button id="nextBtn">下一章</button>
-    <button id="showAllBtn">显示全部</button>
+    <center>
+        <button id="prevBtn">上一章</button>
+        <button id="nextBtn">下一章</button>
+        <button id="showAllBtn">显示全部</button>
+    </center>
+  
     <div id="STChartCon"></div>
     <script src="../dist/index.js"></script>
 
@@ -74,6 +80,18 @@
         let chapterNo = 1
         chart.setData(processDialogs)
         chart.renderStory(1)
+        chart.registerListener("click", function(eventType, params) {
+            alert(eventType)
+            console.log(params)
+        }, window, "clickEvent")
+        // chart.registerListener("mouseout", function(eventType, params) {
+        //     alert(eventType)
+        //     console.log(params)
+        // }, window, "mouseoutEvent")
+        // chart.registerListener("mouseover", function(eventType, params) {
+        //     alert(eventType)
+        //     console.log(params)
+        // }, window, "mouseoverEvent")
 
         document.getElementById("prevBtn").addEventListener("click", prevChapStroy, false)
         document.getElementById("nextBtn").addEventListener("click", nextChapStroy, false)

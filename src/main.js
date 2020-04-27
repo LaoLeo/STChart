@@ -8,7 +8,7 @@ import "echarts/src/chart/graph"
 import 'echarts/src/component/tooltip';
 // import 'echarts/src/component/title';
 // import 'echarts/src/component/toolbox';
-import { filterDialogsByChapter } from "./util"
+import { filterDialogsByChapter, debounce } from "./util"
 
 export default class STChart {
     constructor(el) {
@@ -16,6 +16,9 @@ export default class STChart {
         this.chart = null
         this.currChapter = 0
         this.processDialogs = null
+        this.clickHandler = null
+        this.mouseoutHandler = null
+        this.mouseoverHandler = null
         this._defaultOpt = {
             // title: {
             //     text: '',
@@ -178,28 +181,12 @@ export default class STChart {
                 {
                     type: 'slider',
                     show: false,
-                    // filterMode: "empty",
                     xAxisIndex: [0],
-                    // backgroundColor: "rgba(17,135,255,0.35)",
-                    // fillerColor: "rgba(129, 192, 255,1)",
                     startValue: 0,
                     endValue: 50,
                     minValueSpan: 40,
                     maxValueSpan: 200,
                     showDetail: false,
-
-                    // height: 8,
-                    // bottom: 20,
-                    // borderColor: 'transparent',
-                    // backgroundColor: '#e2e2e2',
-                    // handleIcon: 'M10.7,11.9H9.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4h1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7v-1.2h6.6z M13.3,22H6.7v-1.2h6.6z M13.3,19.6H6.7v-1.2h6.6z', // jshint ignore:line
-                    // handleSize: 20,
-                    // handleStyle: {
-                    //   shadowBlur: 6,
-                    //   shadowOffsetX: 1,
-                    //   shadowOffsetY: 2,
-                    //   shadowColor: '#aaa'
-                    // }
 
                     filterMode: 'weakFilter',
                     height: 20,
@@ -251,6 +238,26 @@ export default class STChart {
     nextChap() {
         this.renderStory(++this.currChapter)
     }
+
+    registerListener(event, handler, self) {
+        if (this._typeof(handler) != "Function") {
+            throw new Error(`${handler} is required function`)
+        }
+        let args = Array.prototype.slice.call(arguments, 3)
+        
+        switch (event) {
+            case "click":
+                this.clickHandler = handler.bind(self, ...args)
+                break
+            case "mouseout":
+                this.mouseoutHandler = handler.bind(self, ...args)
+                break
+            case "mouseover":
+                this.mouseoverHandler = handler.bind(self, ...args)
+                break
+        }
+    }
+
     /**
      * 按章节显示剧情
      * @param {Number} chapter 
@@ -324,7 +331,6 @@ export default class STChart {
 
     _repositionNodes() {
         let positonCount = new Map();
-        // let positonSelectorCount = new Map();
         // 顺序调整结束
 
         let maxCount = 0;
@@ -350,7 +356,6 @@ export default class STChart {
         // 开始重新计算Y值
 
         let positonCount_Used = new Map();
-        // let positonSelectorCount_Used = new Map();
 
         this._defaultOpt.series[0].data.forEach((node) => {
             // 剧情点
@@ -414,65 +419,17 @@ export default class STChart {
         this._defaultOpt.xAxis.max =
             this.maxPosition * this.treeConfig.xPositionSize + 10;
 
-        // 保存缓存
-        // localStorage.setItem('gameGutsOption', JSON.stringify(this._defaultOpt));
+        this.chart.on('click', debounce((params) => {
+            this.clickHandler && this.clickHandler(params)
+        }, 200, true));
 
-        this.chart.on('click', function (params) {
-            alert("click")
-            console.warn(params)
-        });
+        this.chart.on('mouseout', debounce((params) => {
+            this.mouseoutHandler && this.mouseoutHandler(params)
+        }, 200, true));
 
-        // this.chart.on('mouseout', function (params) {
-        //     let index = -1;
-
-        //     if (
-        //         !this.fullScreen &&
-        //         this.copyEditor &&
-        //         params.data.dataSet &&
-        //         this.copyEditor.id === params.data.dataSet.id
-        //     ) {
-        //         if (
-        //             params.data.dataSet &&
-        //             params.data.dataSet.nodeType != '选项' &&
-        //             params.data.dataSet.id == this.copyEditor.id
-        //         ) {
-        //             index = params.dataIndex;
-        //         } else {
-        //             index = this._defaultOpt.series[0].data.findIndex(function (item) {
-        //                 return item.dataSet.id == this.copyEditor.id;
-        //             });
-        //         }
-
-        //         this.chart.dispatchAction({
-        //             type: 'focusNodeAdjacency',
-
-        //             // 使用 seriesId 或 seriesIndex 或 seriesName 来定位 series.
-        //             seriesIndex: 0,
-
-        //             // 使用 dataIndex 来定位节点。
-        //             dataIndex: index
-        //         });
-        //     }
-        // });
-
-        // this.chart.on('mouseover', function (params) {
-        //     if (params.data.dataSet && params.data.dataSet.canedit) {
-        //         params.seriesName = params.data.dataSet.description;
-        //     }
-
-        //     if (this.fullScreen) {
-        //         if (params.data.dataSet && params.data.dataSet.nodeType != '选项') {
-        //             // 如果全屏模式，要处理hover
-        //             let targetDom =
-        //                 this.$refs['fullTable'].$el.children[2].children[0].children[1]
-        //                     .children[params.dataIndex];
-        //             this.hoverEditor = params.data.dataSet;
-        //             this.$refs['fullTable'].$el.children[2].scrollTop =
-        //                 targetDom.offsetTop;
-        //             targetDom.click();
-        //         }
-        //     }
-        // });
+        this.chart.on('mouseover', debounce((params) => {
+            this.mouseoverHandler && this.mouseoverHandler(params)
+        }, 200, true));
 
         this.chart.hideLoading();
         this.chart.setOption(this._defaultOpt);
@@ -510,14 +467,7 @@ export default class STChart {
             nodeData.itemStyle.normal.borderSize = this.treeConfig.guts[
                 'begin'
             ].borderSize;
-            // nodeData.attributes.modularity_class = '开始';
 
-            // this.chapterMap.set(1, {
-            //     chapter: 1,
-            //     position: data.position,
-            //     type: '上线',
-            //     id: data.id
-            // });
         } else if (data.nodeType == '剧情') {
             nodeData.symbol = this.treeConfig.guts['guts'].nonSave.symbol;
             nodeData.symbolSize = this.treeConfig.guts['guts'].nonSave.symbolSize;
@@ -540,23 +490,8 @@ export default class STChart {
             nodeData.itemStyle.normal.borderSize = this.treeConfig.guts[
                 'ending'
             ].borderSize;
-
-            // nodeData.attributes.modularity_class = '结局';
         } 
-        // else if (data.nodeType == '剧情' && data.canSave == 1) {
-        //     nodeData.symbol = this.treeConfig.guts['guts'].needSave.symbol;
-        //     nodeData.symbolSize = this.treeConfig.guts['guts'].needSave.symbolSize;
-        //     nodeData.itemStyle.normal.color = this.treeConfig.guts[
-        //         'guts'
-        //     ].needSave.bgColor;
-        //     nodeData.itemStyle.normal.borderColor = this.treeConfig.guts[
-        //         'guts'
-        //     ].needSave.borderColor;
-        //     nodeData.itemStyle.normal.borderSize = this.treeConfig.guts[
-        //         'guts'
-        //     ].borderSize;
-        //     // nodeData.attributes.modularity_class = '剧情:存档';
-        // }
+
 
         return nodeData;
     }
