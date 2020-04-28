@@ -28,7 +28,7 @@ export default class STChart {
             // },
             xAxis: {
                 type: 'value',
-                show: true,
+                show: false,
                 min: 0,
                 max: 'dataMax',
                 splitLine: {
@@ -39,7 +39,7 @@ export default class STChart {
             },
             yAxis: {
                 type: 'value',
-                show: true,
+                show: false,
                 min: 0,
                 max: 'dataMax',
                 splitLine: {
@@ -90,7 +90,7 @@ export default class STChart {
                     // coordinateSystem: 'cartesian2d', //采用直角坐标系
                     symbolSize: [40, 15],
                     symbolOffset: [5, 0],
-                    roam: true,
+                    roam: 'scale',
                     label: {
                         normal: {
                             color: 'rgba(0, 0, 0, 0.6)',

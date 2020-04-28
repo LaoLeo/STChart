@@ -25,7 +25,8 @@
     </center>
   
     <div id="STChartCon"></div>
-    <script src="../dist/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@4.7.0/dist/echarts.min.js"></script>
+    <script src="../dist/STChart.js"></script>
 
     <script>
         const processDialogs = [
@@ -73,6 +74,54 @@
                 description: "IIIIIIIIIII",
                 name: "剧情5",
                 chapter: 2,
+                type: 2,
+                children: ["7"]
+            },
+            {
+                dialogId: "7",
+                description: "IIIIIIIIIII",
+                name: "剧情6",
+                chapter: 2,
+                type: 2,
+                children: ["8"]
+            },
+            {
+                dialogId: "8",
+                description: "IIIIIIIIIII",
+                name: "剧情7",
+                chapter: 2,
+                type: 2,
+                children: ["9"]
+            },
+            {
+                dialogId: "9",
+                description: "IIIIIIIIIII",
+                name: "剧情8",
+                chapter: 2,
+                type: 2,
+                children: ["10"]
+            },
+            {
+                dialogId: "10",
+                description: "IIIIIIIIIII",
+                name: "剧情9",
+                chapter: 2,
+                type: 2,
+                children: ["11"]
+            },
+            {
+                dialogId: "11",
+                description: "IIIIIIIIIII",
+                name: "剧情10",
+                chapter: 2,
+                type: 2,
+                children: ["12"]
+            },
+            {
+                dialogId: "12",
+                description: "IIIIIIIIIII",
+                name: "剧情11",
+                chapter: 2,
                 type: 3
             },
         ]
@@ -98,6 +147,7 @@
         document.getElementById("showAllBtn").addEventListener("click", wholeStroy, false)
         
         function wholeStroy() {
+            chapterNo=0
             chart.renderStory()
         }
         function prevChapStroy() {
